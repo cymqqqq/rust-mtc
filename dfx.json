@@ -1,0 +1,17 @@
+{
+  "canisters": {
+    "bitcoin_test_backend": {
+      "candid": "src/bitcoin_test_backend/bitcoin_test_backend.did",
+      "package": "bitcoin_test_backend",
+      "type": "rust"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
