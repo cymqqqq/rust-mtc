@@ -48,7 +48,7 @@ pub async fn get_balance(address: String) -> u64 {
 /// Returns the UTXOs of the given bitcoin address.
 #[update]
 #[candid_method(update)]
-pub async fn get_utxos(address: String) -> Vec<(JsonOutPoint, u64)> {
+pub async fn get_utxos(address: String) -> Vec<(String, u64)> {
     // let network = NETWORK.with(|n| n.get());
     bitcoin_api::get_utxo(BitcoinNetwork::Testnet, address).await
 }

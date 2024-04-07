@@ -1,8 +1,7 @@
 type BitcoinNetwork = variant { mainnet; regtest; testnet };
-type JsonOutPoint = record { txid : text; vout : nat32 };
 service : (BitcoinNetwork) -> {
   get_balance : (text) -> (nat64);
   get_current_fee_percentiles : () -> (vec nat64);
   get_p2wpkh_address : (text) -> (text);
-  get_utxos : (text) -> (vec record { JsonOutPoint; nat64 });
+  get_utxos : (text) -> (vec record { text; nat64 });
 }

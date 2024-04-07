@@ -11,6 +11,7 @@ use ic_cdk::api::management_canister::bitcoin::{
     BitcoinAddress, BitcoinNetwork, GetBalanceRequest, GetCurrentFeePercentilesRequest,
     GetUtxosRequest, GetUtxosResponse, MillisatoshiPerByte, Satoshi, SendTransactionRequest,
 };
+use std::cell::RefCell;
 use serde::Serialize;
 // The fees for the various bitcoin endpoints.
 const GET_BALANCE_COST_CYCLES: u64 = 100_000_000;
@@ -20,15 +21,39 @@ const SEND_TRANSACTION_BASE_CYCLES: u64 = 5_000_000_000;
 const SEND_TRANSACTION_PER_BYTE_CYCLES: u64 = 20_000_000;
 
 thread_local! {
-    static NETWORK: Cell<BitcoinNetwork> = Cell::new(BitcoinNetwork::Testnet);
+    static WALLET_STATE: RefCell<WalletState> = RefCell::new(WalletState::init());
 
-    // The derivation path to use for ECDSA secp256k1.
-    static DERIVATION_PATH: Vec<Vec<u8>> = vec![];
-
-    // The ECDSA key name.
-    static KEY_NAME: RefCell<String> = RefCell::new(String::from("test_key_1"));
 }
 
+#[derive(CandidType, Deserialize, Serialize, Debug, Clone)]
+pub struct WalletState {
+    pub unspend_utxo: Vec<(String, u64)>
+}
+
+
+impl WalletState {
+    pub fn init() -> Self {
+        Self { unspend_utxo: vec![] }
+    }
+
+    pub fn push_utxo(&mut self, outpoint: String, amount: u64) {
+        self.unspend_utxo.push((outpoint, amount));
+    }
+
+    pub fn get_utxo(&self) -> Vec<(String, u64)> {
+        self.unspend_utxo.clone()
+    }
+
+}
+
+pub fn write_wallet_utxo(outpoint: String, amount: u64) {
+    WALLET_STATE.with(|wallet_state| wallet_state.borrow_mut().push_utxo(outpoint, amount));
+}
+
+pub fn read_wallet_utxo() -> Vec<(String, u64)> {
+    WALLET_STATE.with(|wallet_state| wallet_state.borrow().get_utxo())
+
+}
 
 pub async fn get_balance(network: BitcoinNetwork, address: String) -> u64 {
     let balance_res: Result<(Satoshi, ), _> = call_with_payment(
@@ -52,6 +77,9 @@ impl JsonOutPoint {
         self.txid.as_bytes()
     }
     
+    pub fn txid_hex(&self) -> &str {
+        self.txid.as_str()
+    }
     pub fn vout(&self) -> u32 {
         self.vout
     }
@@ -69,7 +97,7 @@ impl From<OutPoint> for JsonOutPoint {
     }
   }
 }
-pub async fn get_utxo(network: BitcoinNetwork, address: String) -> Vec<(JsonOutPoint, u64)> {
+pub async fn get_utxo(network: BitcoinNetwork, address: String) -> Vec<(String, u64)> {
     let utxo_res: Result<(GetUtxosResponse, ), _> = call_with_payment(
         Principal::management_canister(), 
         "bitcoin_get_utxos", 
@@ -79,15 +107,18 @@ pub async fn get_utxo(network: BitcoinNetwork, address: String) -> Vec<(JsonOutP
             filter: None,
         }, ), GET_UTXOS_COST_CYCLES).await;
     let unspent_utxo = utxo_res.unwrap().0.utxos;
-    let mut unspent = Vec::new();
+    // let mut unspent = Vec::new();
     unspent_utxo.into_iter()
         .map(|output| {
             let outpoint = OutPoint::new(Txid::from_slice(&output.outpoint.txid).expect("get txid failed"), output.outpoint.vout);
-            
-            unspent.push((JsonOutPoint::from(outpoint), output.value));
+            let json_outpoint = JsonOutPoint::from(outpoint);
+            let format_outpoint_str = format!("{}:{}", json_outpoint.txid_hex().to_string(), json_outpoint.vout());
+            write_wallet_utxo(format_outpoint_str, output.value);
+            // unspent.push((JsonOutPoint::from(outpoint), output.value));
         })
         .collect::<Vec<_>>();
-    unspent
+    // unspent
+    read_wallet_utxo()
 
 }
 

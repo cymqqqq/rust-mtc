@@ -373,7 +373,7 @@ enum WitnessVersion {
 pub fn network_and_public_key_to_p2wpkh(network: BitcoinNetwork, public_key: &[u8]) -> String {
     assert_eq!(public_key.len(), 33);
     assert!(public_key[0] == 0x02 || public_key[0] == 0x03);
-    encode_bech32(network, &ripemd160(&sha256(public_key)), WitnessVersion::V1)
+    encode_bech32(network, &ripemd160(&sha256(public_key)), WitnessVersion::V0)
 }
 
 /// Returns the human-readable part of a bech32 address
