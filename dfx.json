@@ -6,10 +6,27 @@
       "type": "rust"
     }
   },
+  "bitcoin": {
+    "enabled": true,
+    "network": "regtest",
+    "idle_seconds": 3600,
+    "nodes": [
+      "127.0.0.1:18443"
+    ],
+    "incoming_source": {
+      "Path": "/Users/yumeng/bitcoin_test/data"
+    }
+  },
   "defaults": {
+    
     "build": {
-      "args": "",
-      "packtool": ""
+      "packtool": "",
+      "args": ""
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:4943"
     }
   },
   "output_env_file": ".env",

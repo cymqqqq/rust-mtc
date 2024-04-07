@@ -1,3 +1,4 @@
+
 mod types;
 mod ecdsa_api;
 mod bitcoin_api;
@@ -10,11 +11,8 @@ use ic_cdk::api::management_canister::bitcoin::{
 };
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, update};
 use std::cell::{Cell, RefCell};
-use candid::candid_method;
-use icrc_ledger_types::icrc1::account::Account;
-use candid::Principal;
-
-
+use icrc_ledger_types::icrc1::account::{self, Account, Subaccount};
+use candid::{candid_method, Principal};
 thread_local! {
     static NETWORK: Cell<BitcoinNetwork> = Cell::new(BitcoinNetwork::Testnet);
 
@@ -59,6 +57,7 @@ pub async fn get_utxos(address: String) -> Vec<(JsonOutPoint, u64)> {
 #[update]
 #[candid_method(update)]
 pub async fn get_current_fee_percentiles() -> Vec<MillisatoshiPerByte> {
+    
     // let network = NETWORK.with(|n| n.get());
     bitcoin_api::get_current_fee_percent(BitcoinNetwork::Testnet).await
 }
@@ -88,7 +87,6 @@ pub async fn get_p2wpkh_address(pid: String) -> String {
     bitcoin_wallet::account_to_p2wpkh_address(network, "test_key_1".to_string(), &account).await
 }
 
-
 // #[pre_upgrade]
 // fn pre_upgrade() {
 //     let network = NETWORK.with(|n| n.get());
@@ -104,3 +102,9 @@ pub async fn get_p2wpkh_address(pid: String) -> String {
 //     init(network);
 // }
 
+
+
+fn main() {
+    candid::export_service!();
+    std::print!("{}", __export_service());
+}

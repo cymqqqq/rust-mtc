@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  bitcoind:
+    privileged: true
+    platform: linux/amd64
+    image: registry.gitlab.com/hashbeam/docker/bitcoind:25.0
+    command: "-fallbackfee=0.0002"
+    environment:
+      MYUID: 1000
+      MYGID: 1000
+      RPCAUTH: "ic-btc-test:cdf2741387f3a12438f69092f0fdad8e$62081498c98bee09a0dce2b30671123fa561932992ce377585e8e08bb0c11dfa"
+    ports:
+      - 18443:18443
+    volumes:
+      - ./data:/srv/app/.bitcoin
+  # electrs:
+  #   privileged: true
+  #   platform: linux/amd64
+  #   image: registry.gitlab.com/hashbeam/docker/electrs:0.9.14
+  #   environment:
+  #     MYUID: 1000
+  #     MYGID: 1000
+  #     BTCPASS: "password"
+  #   volumes:
+  #     - ./dataindex:/srv/app/db
+  #   depends_on:
+  #     - bitcoind
+  #   ports:
+  #     - 50001:50001
+  # proxy:
+  #   privileged: true
+  #   platform: linux/amd64
+  #   image: ghcr.io/rgb-tools/rgb-proxy-server:0.2.0
+  #   ports:
+  #     - 3000:3000
