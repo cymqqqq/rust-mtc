@@ -9,6 +9,7 @@ use ic_cdk::api::management_canister::bitcoin::{
     BitcoinNetwork, GetUtxosResponse, MillisatoshiPerByte
 };
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, update};
+use types::{SendBtcRequest, UpdateUtxoRequest};
 use std::cell::{Cell, RefCell};
 use candid::candid_method;
 use icrc_ledger_types::icrc1::account::Account;
@@ -90,7 +91,27 @@ pub async fn get_p2wpkh_address(pid: String) -> String {
     bitcoin_wallet::account_to_p2wpkh_address(network, "test_key_1".to_string(), &account).await
 }
 
+#[update]
+#[candid_method(update)]
+pub async fn send_btc(send_btc_request: SendBtcRequest) -> String {
+    let dst_addr = send_btc_request.dst_address;
+    let amount = send_btc_request.amount;
+    let pid = Principal::from_text(send_btc_request.pid).unwrap();
+    let account = Account { owner: pid, subaccount: None };
+    let key_name = "test_key_1".to_string();
+    let path = vec![vec![]];
+    let network = BitcoinNetwork::Testnet;
+    let tx = bitcoin_wallet::send(network, path, key_name, dst_addr, amount, &account).await;
+    tx.to_string()
+}
 
+#[update]
+#[candid_method(update)]
+pub async fn update_utxo(update_utxo_req: UpdateUtxoRequest) -> Vec<(String, u64)>{
+    let network = BitcoinNetwork::Testnet;
+    let address = update_utxo_req.address;
+    bitcoin_api::update_utxo(network, address).await
+}
 // #[pre_upgrade]
 // fn pre_upgrade() {
 //     let network = NETWORK.with(|n| n.get());

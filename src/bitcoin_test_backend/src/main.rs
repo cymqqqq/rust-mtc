@@ -4,7 +4,7 @@ mod ecdsa_api;
 mod bitcoin_api;
 mod bitcoin_wallet;
 
-use bitcoin::Network;
+use bitcoin::{amount, Network};
 use bitcoin_api::JsonOutPoint;
 use ic_cdk::api::management_canister::bitcoin::{
     BitcoinNetwork, GetUtxosResponse, MillisatoshiPerByte
@@ -13,6 +13,7 @@ use ic_cdk_macros::{init, post_upgrade, pre_upgrade, update};
 use std::cell::{Cell, RefCell};
 use icrc_ledger_types::icrc1::account::{self, Account, Subaccount};
 use candid::{candid_method, Principal};
+use types::{SendBtcRequest, UpdateUtxoRequest};
 thread_local! {
     static NETWORK: Cell<BitcoinNetwork> = Cell::new(BitcoinNetwork::Testnet);
 
@@ -86,6 +87,28 @@ pub async fn get_p2wpkh_address(pid: String) -> String {
     // let network = NETWORK.with(|n| n.get());
     let network = BitcoinNetwork::Testnet;
     bitcoin_wallet::account_to_p2wpkh_address(network, "test_key_1".to_string(), &account).await
+}
+
+#[update]
+#[candid_method(update)]
+pub async fn send_btc(send_btc_request: SendBtcRequest) -> String {
+    let dst_addr = send_btc_request.dst_address;
+    let amount = send_btc_request.amount;
+    let pid = Principal::from_text(send_btc_request.pid).unwrap();
+    let account = Account { owner: pid, subaccount: None };
+    let key_name = "test_key_1".to_string();
+    let path = vec![vec![]];
+    let network = BitcoinNetwork::Testnet;
+    let tx = bitcoin_wallet::send(network, path, key_name, dst_addr, amount, &account).await;
+    tx.to_string()
+}
+
+#[update]
+#[candid_method(update)]
+pub async fn update_utxo(update_utxo_req: UpdateUtxoRequest) -> Vec<(String, u64)>{
+    let network = BitcoinNetwork::Testnet;
+    let address = update_utxo_req.address;
+    bitcoin_api::update_utxo(network, address).await
 }
 
 // #[pre_upgrade]

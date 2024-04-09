@@ -61,8 +61,7 @@ pub fn read_wallet_utxo() -> Vec<(String, u64)> {
         .borrow()
         .get_utxo()
         .iter()
-        .map(|utxo|  utxo_set.push((format!("{}:{}", utxo.0.txid_hex(), utxo.0.vout()), utxo.1)));
-    }
+        .for_each(|utxo|  utxo_set.push((format!("{}:{}", utxo.0.txid_hex(), utxo.0.vout()), utxo.1)));}
     );
     utxo_set
 }
@@ -121,13 +120,12 @@ pub async fn update_utxo(network: BitcoinNetwork, address: String) -> Vec<(Strin
     let unspent_utxo = utxo_res.unwrap().0.utxos;
     // let mut unspent = Vec::new();
     unspent_utxo.into_iter()
-        .map(|output| {
+        .for_each(|output| {
             let outpoint = OutPoint::new(Txid::from_slice(&output.outpoint.txid).expect("get txid failed"), output.outpoint.vout);
             let json_outpoint = JsonOutPoint::from(outpoint);
             write_wallet_utxo(json_outpoint, output.value);
             // unspent.push((JsonOutPoint::from(outpoint), output.value));
-        })
-        .collect::<Vec<_>>();
+        });
     // unspent
     read_wallet_utxo()
 

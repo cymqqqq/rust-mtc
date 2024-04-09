@@ -43,4 +43,14 @@ pub struct  SignWithECDSA {
     pub derivation_path: Vec<Vec<u8>>,
     pub key_id: EcdsaKeyId,
 }
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct  SendBtcRequest {
+    pub pid: String,
+    pub amount: u64,
+    pub dst_address: String,
+}
 
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct  UpdateUtxoRequest {
+    pub address: String,
+}

@@ -110,8 +110,8 @@ pub async fn send(
     let own_public_key =
         ecdsa_api::ecdsa_public_key(key_name.clone(), path.clone()).await;
     // let own_address = public_key_to_p2pkh_address(network, &own_public_key);
-    let own_address = account_to_p2wpkh_address(network, key_name.clone(),&account).await;
-
+    // let own_address = account_to_p2wpkh_address(network, key_name.clone(),&account).await;
+    let own_address = "tb1qs0y2rvapywv9pxdzjxmcn4gx8yhuf4kq3yv5qy".to_string();
     // print("Fetching UTXOs...");
     // Note that pagination may have to be used to get all UTXOs for the given address.
     // For the sake of simplicity, it is assumed here that the `utxo` field in the response
@@ -133,7 +133,7 @@ pub async fn send(
     )
     .await;
 
-    let tx_bytes = serialize(&transaction);
+    // let tx_bytes = serialize(&transaction);
     // print(&format!("Transaction to sign: {}", hex::encode(tx_bytes)));
 
     // Sign the transaction.
@@ -193,7 +193,7 @@ async fn build_transaction(
             own_public_key,
             own_address,
             transaction.clone(),
-            String::from(""), // mock key name
+            "test_key_1".to_string(), // mock key name
             vec![],    
             amount,       // mock derivation path
             account,
@@ -245,9 +245,10 @@ fn build_transaction_with_fee(
 
     let inputs: Vec<TxIn> = utxos_to_spend
         .into_iter()
-        .map(|(utxo, amount)| TxIn {
+        .map(|(utxo, _)| TxIn {
             previous_output: OutPoint {
-                txid: Txid::from_raw_hash(Hash::from_slice(&utxo.txid()).unwrap()),
+                txid: Txid::from_slice(utxo.txid()).unwrap(),
+                //  Txid::from_raw_hash(Hash::from_slice(&utxo.txid()).unwrap()),
                 vout: utxo.vout(),
             },
             sequence: bitcoin::Sequence::ENABLE_RBF_NO_LOCKTIME,
