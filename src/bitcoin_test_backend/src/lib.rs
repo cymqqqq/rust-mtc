@@ -50,9 +50,11 @@ pub async fn get_balance(address: String) -> u64 {
 /// Returns the UTXOs of the given bitcoin address.
 #[update]
 #[candid_method(update)]
-pub async fn get_utxos(address: String) -> Vec<(String, u64)> {
+pub async fn get_utxos() -> Vec<(String, u64)> {
     // let network = NETWORK.with(|n| n.get());
-    bitcoin_api::get_utxo(BitcoinNetwork::Testnet, address).await
+    // let mut utxo = Vec::new();
+    bitcoin_api::read_wallet_utxo()
+  
 }
 /// Returns the 100 fee percentiles measured in millisatoshi/byte.
 /// Percentiles are computed from the last 10,000 transactions (if available).

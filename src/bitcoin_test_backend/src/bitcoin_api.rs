@@ -27,7 +27,7 @@ thread_local! {
 
 #[derive(CandidType, Deserialize, Serialize, Debug, Clone)]
 pub struct WalletState {
-    pub unspend_utxo: Vec<(String, u64)>
+    pub unspend_utxo: Vec<(JsonOutPoint, u64)>
 }
 
 
@@ -36,23 +36,35 @@ impl WalletState {
         Self { unspend_utxo: vec![] }
     }
 
-    pub fn push_utxo(&mut self, outpoint: String, amount: u64) {
+    pub fn push_utxo(&mut self, outpoint: JsonOutPoint, amount: u64) {
         self.unspend_utxo.push((outpoint, amount));
     }
 
-    pub fn get_utxo(&self) -> Vec<(String, u64)> {
+    pub fn get_utxo(&self) -> Vec<(JsonOutPoint, u64)> {
         self.unspend_utxo.clone()
     }
 
 }
 
-pub fn write_wallet_utxo(outpoint: String, amount: u64) {
+pub fn write_wallet_utxo(outpoint: JsonOutPoint, amount: u64) {
     WALLET_STATE.with(|wallet_state| wallet_state.borrow_mut().push_utxo(outpoint, amount));
 }
 
-pub fn read_wallet_utxo() -> Vec<(String, u64)> {
+pub fn get_all_utxo_from_wallet() -> Vec<(JsonOutPoint, u64)> {
     WALLET_STATE.with(|wallet_state| wallet_state.borrow().get_utxo())
 
+}
+
+pub fn read_wallet_utxo() -> Vec<(String, u64)> {
+    let mut utxo_set = Vec::new();
+    WALLET_STATE.with(|wallet_state| {wallet_state
+        .borrow()
+        .get_utxo()
+        .iter()
+        .map(|utxo|  utxo_set.push((format!("{}:{}", utxo.0.txid_hex(), utxo.0.vout()), utxo.1)));
+    }
+    );
+    utxo_set
 }
 
 pub async fn get_balance(network: BitcoinNetwork, address: String) -> u64 {
@@ -97,7 +109,7 @@ impl From<OutPoint> for JsonOutPoint {
     }
   }
 }
-pub async fn get_utxo(network: BitcoinNetwork, address: String) -> Vec<(String, u64)> {
+pub async fn update_utxo(network: BitcoinNetwork, address: String) -> Vec<(String, u64)> {
     let utxo_res: Result<(GetUtxosResponse, ), _> = call_with_payment(
         Principal::management_canister(), 
         "bitcoin_get_utxos", 
@@ -112,8 +124,7 @@ pub async fn get_utxo(network: BitcoinNetwork, address: String) -> Vec<(String, 
         .map(|output| {
             let outpoint = OutPoint::new(Txid::from_slice(&output.outpoint.txid).expect("get txid failed"), output.outpoint.vout);
             let json_outpoint = JsonOutPoint::from(outpoint);
-            let format_outpoint_str = format!("{}:{}", json_outpoint.txid_hex().to_string(), json_outpoint.vout());
-            write_wallet_utxo(format_outpoint_str, output.value);
+            write_wallet_utxo(json_outpoint, output.value);
             // unspent.push((JsonOutPoint::from(outpoint), output.value));
         })
         .collect::<Vec<_>>();
@@ -121,6 +132,9 @@ pub async fn get_utxo(network: BitcoinNetwork, address: String) -> Vec<(String, 
     read_wallet_utxo()
 
 }
+
+
+
 
 pub async fn get_current_fee_percent(network: BitcoinNetwork) -> Vec<MillisatoshiPerByte> {
     let res: Result<(Vec<MillisatoshiPerByte>, ), _> = call_with_payment(

@@ -22,7 +22,7 @@ pub async fn ecdsa_public_key(key_name: String, derivation_path: Vec<Vec<u8>>) -
 
 pub async fn sign_with_ecdsa(
     key_name: String,
-    derivation_path: Vec<Vec<u8>>,
+    derivation_path: &Vec<Vec<u8>>,
     message_hash: Vec<u8>
 ) -> Vec<u8> {
     let res: Result<(SignWithECDSAReply, ), _> = call_with_payment(
@@ -30,7 +30,7 @@ pub async fn sign_with_ecdsa(
         "sign_with_ecdsa", 
         (SignWithECDSA {
             message_hash: message_hash,
-            derivation_path: derivation_path,
+            derivation_path: derivation_path.clone(),
             key_id: EcdsaKeyId { curve: EcdsaCurve::Secp256k1, name: key_name }
         },), SIGN_WITH_ECDSA_COST_CYCLES).await;
     res.unwrap().0.signature
