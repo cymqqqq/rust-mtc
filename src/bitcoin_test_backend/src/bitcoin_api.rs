@@ -1,18 +1,20 @@
 
 
-use std::fmt;
+// use std::fmt;
+// use std::io::{Read, Write};
 
 use bitcoin::hashes::Hash;
-use bitcoin::Network;
+// use bitcoin::Network;
 use bitcoin::{Txid, OutPoint};
 use candid::{CandidType, Principal, Deserialize};
 use ic_cdk::api::call::call_with_payment;
 use ic_cdk::api::management_canister::bitcoin::{
-    BitcoinAddress, BitcoinNetwork, GetBalanceRequest, GetCurrentFeePercentilesRequest,
-    GetUtxosRequest, GetUtxosResponse, MillisatoshiPerByte, Satoshi, SendTransactionRequest,
+ BitcoinNetwork,
+    GetUtxosRequest, GetUtxosResponse,
 };
 use std::cell::RefCell;
 use serde::Serialize;
+use std::collections::{HashMap, HashSet};
 // The fees for the various bitcoin endpoints.
 const GET_BALANCE_COST_CYCLES: u64 = 100_000_000;
 const GET_UTXOS_COST_CYCLES: u64 = 10_000_000_000;
@@ -27,30 +29,31 @@ thread_local! {
 
 #[derive(CandidType, Deserialize, Serialize, Debug, Clone)]
 pub struct WalletState {
-    pub unspend_utxo: Vec<(JsonOutPoint, u64)>
+    pub unspend_utxo: HashMap<JsonOutPoint, u64>
 }
 
 
 impl WalletState {
     pub fn init() -> Self {
-        Self { unspend_utxo: vec![] }
+        Self { unspend_utxo: HashMap::new() }
     }
 
-    pub fn push_utxo(&mut self, outpoint: JsonOutPoint, amount: u64) {
-        self.unspend_utxo.push((outpoint, amount));
+    pub fn push_utxo(&mut self, outpoint: &JsonOutPoint, amount: u64) {
+        self.unspend_utxo.insert(outpoint.to_owned(), amount);
+    
     }
 
-    pub fn get_utxo(&self) -> Vec<(JsonOutPoint, u64)> {
+    pub fn get_utxo(&self) -> HashMap<JsonOutPoint, u64> {
         self.unspend_utxo.clone()
     }
 
 }
 
 pub fn write_wallet_utxo(outpoint: JsonOutPoint, amount: u64) {
-    WALLET_STATE.with(|wallet_state| wallet_state.borrow_mut().push_utxo(outpoint, amount));
+    WALLET_STATE.with(|wallet_state| wallet_state.borrow_mut().push_utxo(&outpoint, amount));
 }
 
-pub fn get_all_utxo_from_wallet() -> Vec<(JsonOutPoint, u64)> {
+pub fn get_all_utxo_from_wallet() -> HashMap<JsonOutPoint, u64> {
     WALLET_STATE.with(|wallet_state| wallet_state.borrow().get_utxo())
 
 }
@@ -61,53 +64,42 @@ pub fn read_wallet_utxo() -> Vec<(String, u64)> {
         .borrow()
         .get_utxo()
         .iter()
-        .for_each(|utxo|  utxo_set.push((format!("{}:{}", utxo.0.txid_hex(), utxo.0.vout()), utxo.1)));}
-    );
+        .for_each(|(outpoint, amount)| {
+            let outpoint_str = Txid::from_raw_hash(Hash::from_slice(outpoint.txid()).unwrap()).to_string();
+            let vout = outpoint.vout();
+            let utxo_str = format!("{:?}:{}", outpoint_str, vout);
+            utxo_set.push((utxo_str, *amount));
+        });
+    });
     utxo_set
 }
 
-pub async fn get_balance(network: BitcoinNetwork, address: String) -> u64 {
-    let balance_res: Result<(Satoshi, ), _> = call_with_payment(
-        Principal::management_canister(),
-         "bitcoin_get_balance", 
-         (GetBalanceRequest {
-            address,
-            network: network.into(),
-            min_confirmations: None,
-         },), GET_BALANCE_COST_CYCLES).await;
-    balance_res.unwrap().0
-}
-#[derive(Serialize, Deserialize, Debug, CandidType, Clone)]
+#[derive(Serialize, Deserialize, Debug, CandidType, Clone, PartialEq, PartialOrd, Eq, Hash)]
 pub struct JsonOutPoint {
-  txid: String,
+  txid: Vec<u8>,
   vout: u32,
 }
 
 impl JsonOutPoint {
     pub fn txid(&self) -> &[u8] {
-        self.txid.as_bytes()
+        self.txid.as_slice()
     }
     
-    pub fn txid_hex(&self) -> &str {
-        self.txid.as_str()
-    }
     pub fn vout(&self) -> u32 {
         self.vout
     }
 }
-impl fmt::Display for JsonOutPoint {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}:{}", self.txid, self.vout)
-    }
-}
+
 impl From<OutPoint> for JsonOutPoint {
   fn from(outpoint: OutPoint) -> Self {
     Self {
-      txid: outpoint.txid.to_string(),
+      txid: outpoint.txid.to_byte_array().to_vec(),
       vout: outpoint.vout,
     }
   }
 }
+// tb1qnh2pq8ltrnk5qcqssu5wxhqwgg53s48fw7glv2
+
 pub async fn update_utxo(network: BitcoinNetwork, address: String) -> Vec<(String, u64)> {
     let utxo_res: Result<(GetUtxosResponse, ), _> = call_with_payment(
         Principal::management_canister(), 
@@ -131,29 +123,3 @@ pub async fn update_utxo(network: BitcoinNetwork, address: String) -> Vec<(Strin
 
 }
 
-
-
-
-pub async fn get_current_fee_percent(network: BitcoinNetwork) -> Vec<MillisatoshiPerByte> {
-    let res: Result<(Vec<MillisatoshiPerByte>, ), _> = call_with_payment(
-        Principal::management_canister(), 
-        "bitcoin_get_current_fee_percentiles", 
-        (GetCurrentFeePercentilesRequest {
-            network: network.into(),
-        }, ), GET_CURRENT_FEE_PERCENTILES_CYCLES).await;
-    res.unwrap().0
-
-}
-
-pub async fn send_transaction(network: BitcoinNetwork, transaction: Vec<u8>) {
-    let transaction_fee = SEND_TRANSACTION_BASE_CYCLES +
-    (transaction.len() as u64) * SEND_TRANSACTION_PER_BYTE_CYCLES;
-    let res: Result<(), _> = call_with_payment(
-        Principal::management_canister(), 
-        "bitcoin_send_transaction", 
-        (SendTransactionRequest {
-            network: network.into(),
-            transaction
-        }, ), transaction_fee).await;
-    res.unwrap()
-}

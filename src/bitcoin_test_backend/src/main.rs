@@ -3,18 +3,21 @@ mod types;
 mod ecdsa_api;
 mod bitcoin_api;
 mod bitcoin_wallet;
-
-use bitcoin::{amount, Network};
-use bitcoin_api::JsonOutPoint;
-use ic_cdk::api::management_canister::bitcoin::{
-    BitcoinNetwork, GetUtxosResponse, MillisatoshiPerByte
-};
+mod address;
+mod utils;
+// use bitcoin_api::JsonOutPoint;
+use ecdsa_api::{init_ecdsa_public_key, read_public_key};
+use ic_cdk::{api::management_canister::bitcoin::{ GetBalanceRequest,
+    BitcoinNetwork, GetCurrentFeePercentilesRequest, MillisatoshiPerByte
+}, query};
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, update};
 use std::cell::{Cell, RefCell};
-use icrc_ledger_types::icrc1::account::{self, Account, Subaccount};
+use icrc_ledger_types::icrc1::account::Account;
 use candid::{candid_method, Principal};
-use types::{SendBtcRequest, UpdateUtxoRequest};
+use types::{ECDSAPublicKey, SendBtcRequest, UpdateUtxoRequest};
+use ic_cdk::api::management_canister::bitcoin::{bitcoin_get_current_fee_percentiles, bitcoin_get_balance};
 thread_local! {
+
     static NETWORK: Cell<BitcoinNetwork> = Cell::new(BitcoinNetwork::Testnet);
 
     // The derivation path to use for ECDSA secp256k1.
@@ -26,7 +29,7 @@ thread_local! {
 
 #[init]
 #[candid_method(init)]
-pub fn init(network: BitcoinNetwork) {
+pub async fn init(network: BitcoinNetwork) {
     NETWORK.with(|nw| nw.set(network));
     KEY_NAME.with(|key_name| {
         key_name.replace(String::from(match network {
@@ -36,6 +39,20 @@ pub fn init(network: BitcoinNetwork) {
             BitcoinNetwork::Mainnet | BitcoinNetwork::Testnet => "test_key_1",
         }))
     });
+
+}
+
+#[update]
+#[candid_method(update)]
+pub async fn init_pub_key() -> ECDSAPublicKey {
+    init_ecdsa_public_key().await
+
+}
+
+#[query]
+#[candid_method(query)]
+pub async fn read_pub_key() -> ECDSAPublicKey {
+    read_public_key().await
 }
 
 /// Returns the balance of the given bitcoin address.
@@ -43,7 +60,10 @@ pub fn init(network: BitcoinNetwork) {
 #[candid_method(update)]
 pub async fn get_balance(address: String) -> u64 {
     // let network = NETWORK.with(|n| n.get());
-    bitcoin_api::get_balance(BitcoinNetwork::Testnet, address).await
+    match bitcoin_get_balance(GetBalanceRequest {network: BitcoinNetwork::Testnet, address, min_confirmations: Some(0)}).await {
+        Ok(balance) => balance.0,
+        Err(_) => 0u64
+    }
 }
 
 /// Returns the UTXOs of the given bitcoin address.
@@ -61,7 +81,10 @@ pub async fn get_utxos() -> Vec<(String, u64)> {
 pub async fn get_current_fee_percentiles() -> Vec<MillisatoshiPerByte> {
     
     // let network = NETWORK.with(|n| n.get());
-    bitcoin_api::get_current_fee_percent(BitcoinNetwork::Testnet).await
+    match bitcoin_get_current_fee_percentiles(GetCurrentFeePercentilesRequest{network: BitcoinNetwork::Testnet}).await {
+        Ok(vec_byte) => vec_byte.0,
+        Err(_) => vec![]
+    }
 }
 
 /// Returns the P2PKH address of this canister at a specific derivation path.
@@ -86,21 +109,22 @@ pub async fn get_p2wpkh_address(pid: String) -> String {
     // let key_name = KEY_NAME.with(|kn| kn.borrow().to_string());
     // let network = NETWORK.with(|n| n.get());
     let network = BitcoinNetwork::Testnet;
-    bitcoin_wallet::account_to_p2wpkh_address(network, "test_key_1".to_string(), &account).await
+    let pub_key = read_public_key().await;
+    address::account_to_p2wpkh_address(network, &pub_key, &account).await
 }
 
 #[update]
 #[candid_method(update)]
-pub async fn send_btc(send_btc_request: SendBtcRequest) -> String {
+pub async fn send_btc(send_btc_request: SendBtcRequest) -> (Vec<u8>, String) {
     let dst_addr = send_btc_request.dst_address;
     let amount = send_btc_request.amount;
     let pid = Principal::from_text(send_btc_request.pid).unwrap();
     let account = Account { owner: pid, subaccount: None };
-    let key_name = "test_key_1".to_string();
-    let path = vec![vec![]];
     let network = BitcoinNetwork::Testnet;
-    let tx = bitcoin_wallet::send(network, path, key_name, dst_addr, amount, &account).await;
-    tx.to_string()
+    // let key = read_public_key().await;
+    let key_name = "test_key_1".to_string();
+    let tx = bitcoin_wallet::send(network, key_name, dst_addr, amount, &account).await;
+    tx
 }
 
 #[update]

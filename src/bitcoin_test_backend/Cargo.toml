@@ -16,14 +16,16 @@ ripemd = "0.1.1"
 serde = "1.0.132"
 sha2 = "0.10.2"
 hex = "0.4.3"
-bitcoin = "0.30.2"
+bitcoin = "0.32.0-rc1"
 bs58 = "0.4.0"
 ic-cdk-macros = "0.9.0"
 icrc-ledger-types = "0.1.5"
 serde_bytes = "0.11.14"
+bech32 = "0.11.0"
 # ic-crypto = { git = "https://github.com/dfinity/ic.git", branch = "master"}
 ic-crypto-extended-bip32 = { git = "https://github.com/dfinity/ic.git", branch = "master"}
 # getrandom = { version = "0.2", features = ["js"] }
 ic-crypto-getrandom-for-wasm = { git = "https://github.com/dfinity/ic.git", branch = "master"}
+ic-management-canister-types = { git = "https://github.com/dfinity/ic.git", branch = "master"}
 # tokio = { version = "1.35.1", features = ["sync", "macros", "io-util", "rt"] }
 lazy_static = "1.4.0"

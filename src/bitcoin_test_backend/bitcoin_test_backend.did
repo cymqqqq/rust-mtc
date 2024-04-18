@@ -1,4 +1,5 @@
 type BitcoinNetwork = variant { mainnet; regtest; testnet };
+type ECDSAPublicKey = record { public_key : blob; chain_code : blob };
 type SendBtcRequest = record { pid : text; dst_address : text; amount : nat64 };
 type UpdateUtxoRequest = record { address : text };
 service : (BitcoinNetwork) -> {
@@ -6,6 +7,8 @@ service : (BitcoinNetwork) -> {
   get_current_fee_percentiles : () -> (vec nat64);
   get_p2wpkh_address : (text) -> (text);
   get_utxos : () -> (vec record { text; nat64 });
-  send_btc : (SendBtcRequest) -> (text);
+  init_pub_key : () -> (ECDSAPublicKey);
+  read_pub_key : () -> (ECDSAPublicKey) query;
+  send_btc : (SendBtcRequest) -> (blob, text);
   update_utxo : (UpdateUtxoRequest) -> (vec record { text; nat64 });
 }
