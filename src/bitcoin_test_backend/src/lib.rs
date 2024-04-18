@@ -104,6 +104,22 @@ pub async fn get_p2wpkh_address(pid: String) -> String {
     address::account_to_p2wpkh_address(network, &pub_key, &account).await
 }
 
+
+#[update]
+#[candid_method(update)]
+pub async fn get_p2pkh_address(pid: String) -> String {
+    let principal = Principal::from_text(pid).expect("get principal from string failed");
+    let account = Account {
+        owner: principal,
+        subaccount: None,
+    };
+    // let derivation_path = DERIVATION_PATH.with(|d| d.clone());
+    // let key_name = KEY_NAME.with(|kn| kn.borrow().to_string());
+    // let network = NETWORK.with(|n| n.get());
+    let network = BitcoinNetwork::Testnet;
+    let pub_key = read_public_key().await;
+    address::account_to_p2pkh_address(network, &pub_key, &account).await
+}
 #[update]
 #[candid_method(update)]
 pub async fn send_btc(send_btc_request: SendBtcRequest) ->(Vec<u8>, String) {

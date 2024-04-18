@@ -44,11 +44,9 @@ use ic_cdk::
         MillisatoshiPerByte, 
         Satoshi, 
         SendTransactionRequest, 
-}, ecdsa::SignWithEcdsaResponse};
+}, ecdsa::{sign_with_ecdsa, SignWithEcdsaResponse}};
 use icrc_ledger_types::icrc1::account::Account;
-use serde_bytes::ByteBuf;
-use ic_crypto_extended_bip32::{DerivationPath, DerivationIndex, ExtendedBip32DerivationOutput};
-use ic_management_canister_types::ECDSAPublicKeyResponse;
+
 use crate::utils::*;
 // use crate::ecdsa_api::{DerivationPath};
 const SIG_HASH_TYPE: EcdsaSighashType = EcdsaSighashType::All;
@@ -57,24 +55,7 @@ const SIG_HASH_TYPE: EcdsaSighashType = EcdsaSighashType::All;
 
 
 
-/// Returns a valid extended BIP-32 derivation path from an Account (Principal + subaccount)
-pub fn derive_public_key(ecdsa_public_key: &ECDSAPublicKey, account: &Account) -> ECDSAPublicKeyResponse {
-    let ExtendedBip32DerivationOutput {
-        derived_public_key,
-        derived_chain_code,
-    } = DerivationPath::new(
-        derivation_path(account)
-            .into_iter()
-            .map(|x| DerivationIndex(x.into_vec()))
-            .collect(),
-    )
-    .public_key_derivation(&ecdsa_public_key.public_key, &ecdsa_public_key.chain_code)
-    .expect("bug: failed to derive an ECDSA public key from valid inputs");
-    ECDSAPublicKeyResponse {
-        public_key: derived_public_key,
-        chain_code: derived_chain_code,
-    }
-}
+
 
 
 
@@ -366,125 +347,51 @@ async fn sign_transaction
 
 
 
-#[derive(Clone, Copy, PartialEq, Eq)]
-enum WitnessVersion {
-    V0 = 0,
-    V1 = 1,
-}
-
-/// Calculates the p2wpkh address as described in [BIP-0173](https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki).
-///
-/// # Panics
-///
-/// This function panics if the public key in not compressed.
-pub fn network_and_public_key_to_p2wpkh(network: BitcoinNetwork, public_key: &[u8]) -> String {
-    assert_eq!(public_key.len(), 33);
-    assert!(public_key[0] == 0x02 || public_key[0] == 0x03);
-    encode_bech32_new(&ripemd160(&sha256(public_key)), WitnessVersion::V0)
-}
-
-/// Returns the human-readable part of a bech32 address
-pub fn hrp(network: BitcoinNetwork) -> &'static str {
-    match network {
-        BitcoinNetwork::Mainnet => "bc",
-        BitcoinNetwork::Testnet => "tb",
-        BitcoinNetwork::Regtest => "bcrt",
-        _ => todo!(),
-    }
-}
-// fn encode_bech32(network: BitcoinNetwork, hash: &[u8], version: WitnessVersion) -> String {
-//     use bech32::primitives::segwit::;
-
-//     let hrp = hrp(network);
-//     let witness_version: u5 =
-//         u5::try_from_u8(version as u8).expect("bug: witness version must be smaller than 32");
-//     let data: Vec<u5> = std::iter::once(witness_version)
-//         .chain(
-//             bech32::convert_bits(hash, 8, 5, true)
-//                 .expect("bug: bech32 bit conversion failed on valid inputs")
-//                 .into_iter()
-//                 .map(|b| {
-//                     u5::try_from_u8(b).expect("bug: bech32 bit conversion produced invalid outputs")
-//                 }),
-//         )
-//         .collect();
-//     match version {
-//         WitnessVersion::V0 => bech32::encode(hrp, data, bech32::Variant::Bech32)
-//             .expect("bug: bech32 encoding failed on valid inputs"),
-//         WitnessVersion::V1 => bech32::encode(hrp, data, bech32::Variant::Bech32m)
-//             .expect("bug: bech32m encoding failed on valid inputs"),
-//     }
-// }
-
-fn encode_bech32_new(hash: &[u8], version: WitnessVersion) -> String 
+async fn sign_transaction_p2pkh(
+    own_public_key: &[u8],
+    own_address: &Address,
+    mut transaction: Transaction,
+    key_name: String,
+    derivation_path: Vec<Vec<u8>>,
+) -> Transaction
 {
-    use bech32::Hrp;
-
-    // use bech32::Bech32;
-    // use bech32::encode;
-    use bech32::segwit::encode_v0;
-    let hrp = Hrp::parse_unchecked("tb");
-    encode_v0(hrp, &hash).expect("failed to encode")
-}
-
-
-
-/// Converts a SEC1 ECDSA signature to the DER format.
-///
-/// # Panics
-///
-/// This function panics if:
-/// * The input slice is not 64 bytes long.
-/// * Either S or R signature components are zero.
-pub fn sec1_to_der(sec1: Vec<u8>) -> Vec<u8> {
-    // See:
-    // * https://github.com/bitcoin/bitcoin/blob/5668ccec1d3785632caf4b74c1701019ecc88f41/src/script/interpreter.cpp#L97-L170
-    // * https://github.com/bitcoin/bitcoin/blob/d08b63baa020651d3cc5597c85d5316cb39aaf59/src/secp256k1/src/ecdsa_impl.h#L183-L205
-    // * https://security.stackexchange.com/questions/174095/convert-ecdsa-signature-from-plain-to-der-format
-    // * "Mastering Bitcoin", 2nd edition, p. 140, "Serialization of signatures (DER)".
-
-    fn push_integer(buf: &mut Vec<u8>, mut bytes: &[u8]) -> u8 {
-        while !bytes.is_empty() && bytes[0] == 0 {
-            bytes = &bytes[1..];
-        }
-
-        assert!(
-            !bytes.is_empty(),
-            "bug: one of the signature components is zero"
-        );
-
-        assert_ne!(bytes[0], 0);
-
-        let neg = bytes[0] & 0x80 != 0;
-        let n = if neg { bytes.len() + 1 } else { bytes.len() };
-        debug_assert!(n <= u8::MAX as usize);
-
-        buf.push(0x02);
-        buf.push(n as u8);
-        if neg {
-            buf.push(0);
-        }
-        buf.extend_from_slice(bytes);
-        n as u8
-    }
-
+    // Verify that our own address is P2PKH.
     assert_eq!(
-        sec1.len(),
-        64,
-        "bug: a SEC1 signature must be 64 bytes long"
+        own_address.address_type(),
+        Some(AddressType::P2pkh),
+        "This example supports signing p2pkh addresses only."
     );
 
-    let r = &sec1[..32];
-    let s = &sec1[32..];
+    let txclone = transaction.clone();
+    for (index, input) in transaction.input.iter_mut().enumerate() {
+        let sighash = SighashCache::new(&txclone)
+            .legacy_signature_hash(index, &own_address.script_pubkey(), SIG_HASH_TYPE.to_u32())
+            .unwrap();
 
-    let mut buf = Vec::with_capacity(72);
-    // Start of the DER sequence.
-    buf.push(0x30);
-    // The length of the sequence:
-    // Two bytes for integer markers and two bytes for lengths of the integers.
-    buf.push(4);
-    let rlen = push_integer(&mut buf, r);
-    let slen = push_integer(&mut buf, s);
-    buf[1] += rlen + slen; // Update the sequence length.
-    buf
+        let signature = match get_sign_with_ecdsa(
+            key_name.clone(),
+            derivation_path.clone(),
+            sighash.as_byte_array().to_vec(),
+        )
+        .await {
+            Ok(sig) => sig,
+            Err(_) => SignWithEcdsaResponse::default(),
+        };
+
+        // Convert signature to DER.
+        let der_signature = sec1_to_der(signature.signature);
+
+        let mut sig_with_hashtype = der_signature;
+        sig_with_hashtype.push(SIG_HASH_TYPE.to_u32() as u8);
+
+        let sig_with_hashtype_push_bytes = PushBytesBuf::try_from(sig_with_hashtype).unwrap();
+        let own_public_key_push_bytes = PushBytesBuf::try_from(own_public_key.to_vec()).unwrap();
+        input.script_sig = Builder::new()
+            .push_slice(sig_with_hashtype_push_bytes)
+            .push_slice(own_public_key_push_bytes)
+            .into_script();
+        input.witness.clear();
+    }
+
+    transaction
 }

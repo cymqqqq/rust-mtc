@@ -5,6 +5,7 @@ type UpdateUtxoRequest = record { address : text };
 service : (BitcoinNetwork) -> {
   get_balance : (text) -> (nat64);
   get_current_fee_percentiles : () -> (vec nat64);
+  get_p2pkh_address : (text) -> (text);
   get_p2wpkh_address : (text) -> (text);
   get_utxos : () -> (vec record { text; nat64 });
   init_pub_key : () -> (ECDSAPublicKey);
