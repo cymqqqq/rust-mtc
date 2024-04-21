@@ -3,7 +3,7 @@ use serde_bytes::ByteBuf;
 use sha2::{Digest, Sha256};
 use ic_crypto_extended_bip32::{DerivationPath, DerivationIndex, ExtendedBip32DerivationOutput};
 use ic_management_canister_types::ECDSAPublicKeyResponse;
-use crate::types::ECDSAPublicKey;
+use crate::utils::ECDSAPublicKey;
 
 /// Returns a valid extended BIP-32 derivation path from an Account (Principal + subaccount)
 pub fn derive_public_key(ecdsa_public_key: &ECDSAPublicKey, account: &Account) -> ECDSAPublicKeyResponse {

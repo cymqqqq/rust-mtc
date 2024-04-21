@@ -44,25 +44,3 @@ pub struct  UpdateUtxoRequest {
     pub address: String,
 }
 
-/// Represents an error from a management canister call, such as
-/// `sign_with_ecdsa` or `bitcoin_send_transaction`.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CallError {
-    pub(crate) method: String,
-    pub(crate) reason: Reason,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-/// The reason for the management call failure.
-pub enum Reason {
-    /// Failed to send a signature request because the local output queue is
-    /// full.
-    QueueIsFull,
-    /// The canister does not have enough cycles to submit the request.
-    OutOfCycles,
-    /// The call failed with an error.
-    CanisterError(String),
-    /// The management canister rejected the signature request (not enough
-    /// cycles, the ECDSA subnet is overloaded, etc.).
-    Rejected(String),
-}

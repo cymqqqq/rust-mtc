@@ -1,9 +1,7 @@
 
-mod types;
 mod utils;
 mod inscription;
 mod bitcoin_tx;
-mod schnnor;
 mod wallet;
 use wallet::{address, state, send_btc};
 
@@ -16,7 +14,7 @@ use ic_cdk_macros::{init, post_upgrade, pre_upgrade, update};
 use std::cell::{Cell, RefCell};
 use icrc_ledger_types::icrc1::account::Account;
 use candid::{candid_method, Principal};
-use types::{ECDSAPublicKey, SendBtcRequest, UpdateUtxoRequest};
+use utils::{ECDSAPublicKey, SendBtcRequest, UpdateUtxoRequest};
 use ic_cdk::api::management_canister::bitcoin::{bitcoin_get_current_fee_percentiles, bitcoin_get_balance};
 thread_local! {
 

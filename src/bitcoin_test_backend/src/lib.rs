@@ -1,8 +1,6 @@
-mod types;
 mod utils;
 mod inscription;
 mod bitcoin_tx;
-mod schnnor;
 mod wallet;
 pub use wallet::address;
 use utils::{init_ecdsa_public_key, read_public_key};
@@ -11,7 +9,7 @@ use ic_cdk::api::management_canister::bitcoin::{
 };
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, update};
 // use ic_management_canister_types::DerivationPath;
-use types::{ECDSAPublicKey, SendBtcRequest, UpdateUtxoRequest};
+use utils::{ECDSAPublicKey, SendBtcRequest, UpdateUtxoRequest};
 use wallet::{state, send_btc};
 use std::cell::{Cell, RefCell};
 use candid::candid_method;

@@ -1,4 +1,4 @@
-use crate::types::*;
+use crate::utils::*;
 use candid::Principal;
 use std::cell::RefCell;
 use ic_cdk::api::management_canister::ecdsa::{EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyResponse, SignWithEcdsaArgument, SignWithEcdsaResponse};
@@ -7,11 +7,7 @@ use ic_cdk::api::management_canister::ecdsa::EcdsaPublicKeyArgument;
 // The fee for the `sign_with_ecdsa` endpoint using the test key.
 /// Represents an error from a management canister call, such as
 /// `sign_with_ecdsa` or `bitcoin_send_transaction`.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct CallError {
-    method: String,
-    reason: Reason,
-}
+
 thread_local! {
     static KEY: RefCell<Option<ECDSAPublicKey>> = RefCell::default();
 

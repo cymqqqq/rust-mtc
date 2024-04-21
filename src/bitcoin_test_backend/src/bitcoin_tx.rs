@@ -21,7 +21,7 @@ use crate::{
     wallet::send_btc::sign_transaction_p2pkh, 
     utils::read_public_key, 
     inscription::Inscription, 
-    schnnor::{schnorr_public_key, sign_with_schnorr}, 
+    utils::{schnorr_public_key, sign_with_schnorr}, 
 };
 use crate::wallet::address::account_to_p2pkh_address;
 

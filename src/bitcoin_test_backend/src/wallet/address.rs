@@ -3,9 +3,8 @@ use icrc_ledger_types::icrc1::account::Account;
 
 use crate::{
     utils::{
-        derive_public_key, ripemd160, sha256
-    }, 
-    types::ECDSAPublicKey
+        derive_public_key, ripemd160, sha256, ECDSAPublicKey
+    },
 };
 /// Derives a Bitcoin address for the specified account and converts it into
 /// bech32 textual representation.

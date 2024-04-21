@@ -11,8 +11,7 @@ use std::{collections::HashMap, str::FromStr};
 
 use crate::{
     wallet::state::{JsonOutPoint, get_all_utxo_from_wallet}, 
-    utils::{read_public_key, get_sign_with_ecdsa}, 
-    types::ECDSAPublicKey
+    utils::{read_public_key, get_sign_with_ecdsa, ECDSAPublicKey}, 
 };
 use bitcoin::{
     absolute::LockTime, 
