@@ -5,12 +5,6 @@ use ic_crypto_extended_bip32::{DerivationPath, DerivationIndex, ExtendedBip32Der
 use ic_management_canister_types::ECDSAPublicKeyResponse;
 use crate::types::ECDSAPublicKey;
 
-
-#[derive(Clone, Copy, PartialEq, Eq)]
-pub enum WitnessVersion {
-    V0 = 0,
-    V1 = 1,
-}
 /// Returns a valid extended BIP-32 derivation path from an Account (Principal + subaccount)
 pub fn derive_public_key(ecdsa_public_key: &ECDSAPublicKey, account: &Account) -> ECDSAPublicKeyResponse {
     let ExtendedBip32DerivationOutput {

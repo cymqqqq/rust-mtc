@@ -1,8 +1,12 @@
 use ic_cdk::api::management_canister::bitcoin::BitcoinNetwork;
 use icrc_ledger_types::icrc1::account::Account;
 
-use crate::{utils::{derive_public_key}, types::ECDSAPublicKey};
-use crate::utils::*;
+use crate::{
+    utils::{
+        derive_public_key, ripemd160, sha256
+    }, 
+    types::ECDSAPublicKey
+};
 /// Derives a Bitcoin address for the specified account and converts it into
 /// bech32 textual representation.
 pub async fn account_to_p2wpkh_address(

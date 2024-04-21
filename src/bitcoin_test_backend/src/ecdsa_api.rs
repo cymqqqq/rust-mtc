@@ -5,7 +5,6 @@ use ic_cdk::api::management_canister::ecdsa::{EcdsaCurve, EcdsaKeyId, EcdsaPubli
 use ic_cdk::api::management_canister::ecdsa::{ecdsa_public_key, sign_with_ecdsa};
 use ic_cdk::api::management_canister::ecdsa::EcdsaPublicKeyArgument;
 // The fee for the `sign_with_ecdsa` endpoint using the test key.
-const SIGN_WITH_ECDSA_COST_CYCLES: u64 = 10_000_000_000;
 /// Represents an error from a management canister call, such as
 /// `sign_with_ecdsa` or `bitcoin_send_transaction`.
 #[derive(Debug, Clone, PartialEq, Eq)]
