@@ -1,14 +1,14 @@
 
 mod types;
 mod ecdsa_api;
-mod bitcoin_api;
 mod bitcoin_wallet;
 mod utils;
 mod inscription;
 mod bitcoin_tx;
 mod schnnor;
 mod wallet;
-use wallet::address;
+use wallet::{address, state};
+
 // use bitcoin_api::JsonOutPoint;
 use ecdsa_api::{init_ecdsa_public_key, read_public_key};
 use ic_cdk::{api::management_canister::bitcoin::{ GetBalanceRequest,
@@ -76,7 +76,7 @@ pub async fn get_balance(address: String) -> u64 {
 #[candid_method(update)]
 pub async fn get_utxos() -> Vec<(String, u64)> {
     // let network = NETWORK.with(|n| n.get());
-    bitcoin_api::read_wallet_utxo()
+    state::read_wallet_utxo()
 
 }
 /// Returns the 100 fee percentiles measured in millisatoshi/byte.
@@ -153,7 +153,7 @@ pub async fn send_btc(send_btc_request: SendBtcRequest) -> (Vec<u8>, String) {
 pub async fn update_utxo(update_utxo_req: UpdateUtxoRequest) -> Vec<(String, u64)>{
     let network = BitcoinNetwork::Testnet;
     let address = update_utxo_req.address;
-    bitcoin_api::update_utxo(network, address).await
+    state::update_utxo(network, address).await
 }
 
 // #[pre_upgrade]

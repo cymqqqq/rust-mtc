@@ -10,7 +10,7 @@
 use std::{collections::HashMap, str::FromStr};
 
 use crate::{
-    bitcoin_api::{self, JsonOutPoint}, 
+    wallet::state::{JsonOutPoint, get_all_utxo_from_wallet}, 
     ecdsa_api::{read_public_key, get_sign_with_ecdsa}, 
     types::ECDSAPublicKey
 };
@@ -93,7 +93,7 @@ pub async fn send(
     // Note that pagination may have to be used to get all UTXOs for the given address.
     // For the sake of simplicity, it is assumed here that the `utxo` field in the response
     // contains all UTXOs.
-    let own_utxos = bitcoin_api::get_all_utxo_from_wallet();
+    let own_utxos = get_all_utxo_from_wallet();
     // ic_cdk::println!("own_utxo: {:?}", &own_utxos);
     let ecdsa_key = read_public_key().await;
     let derive_pubkey = derive_public_key(&ecdsa_key, &account).public_key;

@@ -1,6 +1,5 @@
 mod types;
 mod ecdsa_api;
-mod bitcoin_api;
 mod bitcoin_wallet;
 mod utils;
 mod inscription;
@@ -15,6 +14,7 @@ use ic_cdk::api::management_canister::bitcoin::{
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, update};
 // use ic_management_canister_types::DerivationPath;
 use types::{ECDSAPublicKey, SendBtcRequest, UpdateUtxoRequest};
+use wallet::state;
 use std::cell::{Cell, RefCell};
 use candid::candid_method;
 use icrc_ledger_types::icrc1::account::Account;
@@ -67,7 +67,7 @@ pub async fn get_balance(address: String) -> u64 {
 pub async fn get_utxos() -> Vec<(String, u64)> {
     // let network = NETWORK.with(|n| n.get());
     // let mut utxo = Vec::new();
-    bitcoin_api::read_wallet_utxo()
+    state::read_wallet_utxo()
   
 }
 /// Returns the 100 fee percentiles measured in millisatoshi/byte.
@@ -144,7 +144,7 @@ pub async fn send_btc(send_btc_request: SendBtcRequest) ->(Vec<u8>, String) {
 pub async fn update_utxo(update_utxo_req: UpdateUtxoRequest) -> Vec<(String, u64)>{
     let network = BitcoinNetwork::Testnet;
     let address = update_utxo_req.address;
-    bitcoin_api::update_utxo(network, address).await
+    state::update_utxo(network, address).await
 }
 // #[pre_upgrade]
 // fn pre_upgrade() {

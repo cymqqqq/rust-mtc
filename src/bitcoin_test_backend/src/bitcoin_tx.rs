@@ -17,7 +17,7 @@ use ic_cdk::api::management_canister::bitcoin::{bitcoin_send_transaction, Bitcoi
 use icrc_ledger_types::icrc1::account::Account;
 // use bitcoin::secp256k1::schnorr::Signature;
 use crate::{
-    bitcoin_api::{get_all_utxo_from_wallet, JsonOutPoint}, 
+    wallet::state::{get_all_utxo_from_wallet, JsonOutPoint}, 
     bitcoin_wallet::sign_transaction_p2pkh, 
     ecdsa_api::{read_public_key}, 
     inscription::Inscription, 
