@@ -1,10 +1,9 @@
 use crate::types::*;
 use candid::Principal;
 use std::cell::RefCell;
-use ic_cdk::{api::{call::{call_with_payment, RejectionCode}, management_canister::ecdsa::{EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyResponse, SignWithEcdsaArgument, SignWithEcdsaResponse}}, call};
+use ic_cdk::api::management_canister::ecdsa::{EcdsaCurve, EcdsaKeyId, EcdsaPublicKeyResponse, SignWithEcdsaArgument, SignWithEcdsaResponse};
 use ic_cdk::api::management_canister::ecdsa::{ecdsa_public_key, sign_with_ecdsa};
-use ic_cdk::api::management_canister::ecdsa::{EcdsaPublicKeyArgument};
-use ic_management_canister_types::{DerivationPath, ECDSAPublicKeyArgs, ECDSAPublicKeyResponse, SignWithECDSAArgs, SignWithECDSAReply};
+use ic_cdk::api::management_canister::ecdsa::EcdsaPublicKeyArgument;
 // The fee for the `sign_with_ecdsa` endpoint using the test key.
 const SIGN_WITH_ECDSA_COST_CYCLES: u64 = 10_000_000_000;
 /// Represents an error from a management canister call, such as
@@ -72,24 +71,6 @@ pub async fn get_sign_with_ecdsa(
         Err(err) => Err(err.1)
     }
 }
-// pub async fn sign_with_ecdsa(
-//     key_name: String,
-//     derivation_path: &DerivationPath,
-//     message_hash: [u8; 32]
-// ) -> Vec<u8> {
-//     let res: Result<(SignWithECDSAReply, ), _> = call_with_payment(
-//         Principal::management_canister(), 
-//         "sign_with_ecdsa", 
-//         (SignWithECDSAArgs {
-//             message_hash,
-//             derivation_path: derivation_path.clone(),
-//             key_id: EcdsaKeyId {
-//                 curve: EcdsaCurve::Secp256k1,
-//                 name: key_name.clone(),
-//             },
-//         },), SIGN_WITH_ECDSA_COST_CYCLES).await;
-//     res.unwrap().0.signature
-// }
 
 /// Initializes the Minter ECDSA public key. This function must be called
 /// before any endpoint runs its logic.
@@ -110,15 +91,5 @@ pub async fn init_ecdsa_public_key() -> ECDSAPublicKey {
         chain_code: ecdsa_public_key.chain_code,
     };
     write_public_key(&key).await;
-            // .unwrap_or_else(|e| ic_cdk::trap(&format!("failed to retrieve ECDSA public key: {e}")));
-    // log!(
-    //     P1,
-    //     "ECDSA public key set to {}, chain code to {}",
-    //     hex::encode(&ecdsa_public_key.public_key),
-    //     hex::encode(&ecdsa_public_key.chain_code)
-    // );
-    // mutate_state(|s| {
-    //     s.ecdsa_public_key = Some(ecdsa_public_key.clone());
-    // });
     key
 }

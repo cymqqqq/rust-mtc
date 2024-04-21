@@ -272,30 +272,19 @@ fn build_transaction_with_fee(
     })
 }
 
-// Sign a bitcoin transaction.
-//
-// IMPORTANT: This method is for demonstration purposes only and it only
-// supports signing transactions if:
-//
-// 1. All the inputs are referencing outpoints that are owned by `own_address`.
-// 2. `own_address` is a P2PKH address.
+// Sign a p2wpkh bitcoin transaction.
+
 async fn sign_transaction
-// <SignFun, Fut>
 (
     own_public_key: &ECDSAPublicKey,
     own_address: &Address,
     mut transaction: Transaction,
     key_name: String,
-    // derivation_path: Vec<Vec<u8>>,
     amount: Satoshi,
     account: &Account,
-    // signer: SignFun,
 ) -> Transaction
-// where
-//     SignFun: Fn(String, Vec<Vec<u8>>, Vec<u8>) -> Fut,
-//     Fut: std::future::Future<Output = Vec<u8>>,
 {
-    // Verify that our own address is P2PKH.
+    // Verify that our own address is P2wPKH.
     assert_eq!(
         own_address.address_type(),
         Some(AddressType::P2wpkh),
@@ -305,14 +294,6 @@ async fn sign_transaction
     
     let path = derivation_path(account).iter().map(|path| path.to_vec()).collect::<Vec<_>>();
     let pubkey = derive_public_key(own_public_key, account).public_key;
-    // let pkhash = hash160(&pubkey);
-    // let script_key = p2wpkh_script_code(&pkhash);
-    // assert_eq!(
-    //     own_address.script_pubkey(),
-    //     script_key,
-    //     "the script code of own address doesn't match the p2wpkh."
-    // );
-    // let path = ic_management_canister_types::DerivationPath::new(derivation_path(account));
 
     for (index, input) in transaction.input.iter_mut().enumerate() {
 
@@ -333,25 +314,25 @@ async fn sign_transaction
         // let pubkey_data = PushBytesBuf::try_from(pubkey.to_vec()).unwrap();
         let witness_sig = Signature::from_slice(&sig_with_hashtype).unwrap();
         let witness_pubkey = bitcoin::secp256k1::PublicKey::from_slice(&pubkey).unwrap();
-        //  input.witness = Witness::p2wpkh(&witness_sig, &witness_pubkey);
-        *sighashcache.witness_mut(index).unwrap() = Witness::p2wpkh(&witness_sig, &witness_pubkey);
-        // input.witness.push(&sig_with_hashtype);
-        // input.witness.push(&pubkey);
+         input.witness = Witness::p2wpkh(&witness_sig, &witness_pubkey);
+        // *sighashcache.witness_mut(index).unwrap() = Witness::p2wpkh(&witness_sig, &witness_pubkey);
+        input.witness.push(&sig_with_hashtype);
+        input.witness.push(&pubkey);
     }
-    sighashcache.into_transaction()
+    // sighashcache.into_transaction()
 
-    // transaction
+    transaction
 }
 
 
 
 
 
-async fn sign_transaction_p2pkh(
+pub async fn sign_transaction_p2pkh(
     own_public_key: &[u8],
     own_address: &Address,
     mut transaction: Transaction,
-    key_name: String,
+    key_name: &str,
     derivation_path: Vec<Vec<u8>>,
 ) -> Transaction
 {
@@ -359,7 +340,7 @@ async fn sign_transaction_p2pkh(
     assert_eq!(
         own_address.address_type(),
         Some(AddressType::P2pkh),
-        "This example supports signing p2pkh addresses only."
+        "Not a correct p2pkh address."
     );
 
     let txclone = transaction.clone();
@@ -369,7 +350,7 @@ async fn sign_transaction_p2pkh(
             .unwrap();
 
         let signature = match get_sign_with_ecdsa(
-            key_name.clone(),
+            key_name.to_string(),
             derivation_path.clone(),
             sighash.as_byte_array().to_vec(),
         )

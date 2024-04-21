@@ -2,8 +2,12 @@ mod types;
 mod ecdsa_api;
 mod bitcoin_api;
 mod bitcoin_wallet;
-mod address;
 mod utils;
+mod inscription;
+mod bitcoin_tx;
+mod schnnor;
+mod wallet;
+pub use wallet::address;
 use ecdsa_api::{init_ecdsa_public_key, read_public_key};
 use ic_cdk::api::management_canister::bitcoin::{
     bitcoin_get_balance, bitcoin_get_current_fee_percentiles, BitcoinNetwork, GetBalanceRequest, GetCurrentFeePercentilesRequest, GetUtxosResponse, MillisatoshiPerByte
@@ -22,7 +26,8 @@ thread_local! {
 
     // The derivation path to use for ECDSA secp256k1.
     static DERIVATION_PATH: Vec<Vec<u8>> = vec![];
-
+    pub static SCHNORR_CANISTER: RefCell<String> = RefCell::new(String::from("6fwhw-fyaaa-aaaap-qb7ua-cai"));
+    // 6fwhw-fyaaa-aaaap-qb7ua-cai
     // The ECDSA key name.
     static KEY_NAME: RefCell<String> = RefCell::new(String::from("test_key_1"));
 }

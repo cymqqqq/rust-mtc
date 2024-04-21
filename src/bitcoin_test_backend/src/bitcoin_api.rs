@@ -14,7 +14,7 @@ use ic_cdk::api::management_canister::bitcoin::{
 };
 use std::cell::RefCell;
 use serde::Serialize;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 // The fees for the various bitcoin endpoints.
 const GET_BALANCE_COST_CYCLES: u64 = 100_000_000;
 const GET_UTXOS_COST_CYCLES: u64 = 10_000_000_000;
@@ -110,13 +110,11 @@ pub async fn update_utxo(network: BitcoinNetwork, address: String) -> Vec<(Strin
             filter: None,
         }, ), GET_UTXOS_COST_CYCLES).await;
     let unspent_utxo = utxo_res.unwrap().0.utxos;
-    // let mut unspent = Vec::new();
     unspent_utxo.into_iter()
         .for_each(|output| {
             let outpoint = OutPoint::new(Txid::from_slice(&output.outpoint.txid).expect("get txid failed"), output.outpoint.vout);
             let json_outpoint = JsonOutPoint::from(outpoint);
             write_wallet_utxo(json_outpoint, output.value);
-            // unspent.push((JsonOutPoint::from(outpoint), output.value));
         });
     // unspent
     read_wallet_utxo()
