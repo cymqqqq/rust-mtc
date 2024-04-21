@@ -65,7 +65,6 @@ const SIG_HASH_TYPE: EcdsaSighashType = EcdsaSighashType::All;
 /// at the given derivation path.
 pub async fn send(
     network: BitcoinNetwork,
-    // path: ic_management_canister_types::DerivationPath,
     key_name: String,
     dst_address: String,
     amount: Satoshi,
@@ -87,12 +86,7 @@ pub async fn send(
         fee_percentiles[50]
     };
 
-    // Fetch our public key, P2PKH address, and UTXOs.
-    // let own_address = account_to_p2wpkh_address(network, &own_public_key,&account).await;
-    // print("Fetching UTXOs...");
-    // Note that pagination may have to be used to get all UTXOs for the given address.
-    // For the sake of simplicity, it is assumed here that the `utxo` field in the response
-    // contains all UTXOs.
+    // Fetch our public key, P2wPKH address, and UTXOs.
     let own_utxos = get_all_utxo_from_wallet();
     // ic_cdk::println!("own_utxo: {:?}", &own_utxos);
     let ecdsa_key = read_public_key().await;

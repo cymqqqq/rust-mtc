@@ -18,7 +18,7 @@ use icrc_ledger_types::icrc1::account::Account;
 // use bitcoin::secp256k1::schnorr::Signature;
 use crate::{
     wallet::state::{get_all_utxo_from_wallet, JsonOutPoint}, 
-    bitcoin_wallet::sign_transaction_p2pkh, 
+    wallet::send_btc::sign_transaction_p2pkh, 
     ecdsa_api::{read_public_key}, 
     inscription::Inscription, 
     schnnor::{schnorr_public_key, sign_with_schnorr}, 

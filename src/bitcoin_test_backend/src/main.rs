@@ -1,13 +1,12 @@
 
 mod types;
 mod ecdsa_api;
-mod bitcoin_wallet;
 mod utils;
 mod inscription;
 mod bitcoin_tx;
 mod schnnor;
 mod wallet;
-use wallet::{address, state};
+use wallet::{address, state, send_btc};
 
 // use bitcoin_api::JsonOutPoint;
 use ecdsa_api::{init_ecdsa_public_key, read_public_key};
@@ -144,7 +143,7 @@ pub async fn send_btc(send_btc_request: SendBtcRequest) -> (Vec<u8>, String) {
     let network = BitcoinNetwork::Testnet;
     // let key = read_public_key().await;
     let key_name = "test_key_1".to_string();
-    let tx = bitcoin_wallet::send(network, key_name, dst_addr, amount, &account).await;
+    let tx = send_btc::send(network, key_name, dst_addr, amount, &account).await;
     tx
 }
 
