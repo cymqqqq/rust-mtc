@@ -1,6 +1,5 @@
 
 mod types;
-mod ecdsa_api;
 mod utils;
 mod inscription;
 mod bitcoin_tx;
@@ -9,7 +8,7 @@ mod wallet;
 use wallet::{address, state, send_btc};
 
 // use bitcoin_api::JsonOutPoint;
-use ecdsa_api::{init_ecdsa_public_key, read_public_key};
+use utils::{init_ecdsa_public_key, read_public_key};
 use ic_cdk::{api::management_canister::bitcoin::{ GetBalanceRequest,
     BitcoinNetwork, GetCurrentFeePercentilesRequest, MillisatoshiPerByte
 }, query};

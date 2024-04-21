@@ -19,7 +19,7 @@ use icrc_ledger_types::icrc1::account::Account;
 use crate::{
     wallet::state::{get_all_utxo_from_wallet, JsonOutPoint}, 
     wallet::send_btc::sign_transaction_p2pkh, 
-    ecdsa_api::{read_public_key}, 
+    utils::read_public_key, 
     inscription::Inscription, 
     schnnor::{schnorr_public_key, sign_with_schnorr}, 
 };

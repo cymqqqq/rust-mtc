@@ -1,12 +1,11 @@
 mod types;
-mod ecdsa_api;
 mod utils;
 mod inscription;
 mod bitcoin_tx;
 mod schnnor;
 mod wallet;
 pub use wallet::address;
-use ecdsa_api::{init_ecdsa_public_key, read_public_key};
+use utils::{init_ecdsa_public_key, read_public_key};
 use ic_cdk::api::management_canister::bitcoin::{
     bitcoin_get_balance, bitcoin_get_current_fee_percentiles, BitcoinNetwork, GetBalanceRequest, GetCurrentFeePercentilesRequest, GetUtxosResponse, MillisatoshiPerByte
 };
