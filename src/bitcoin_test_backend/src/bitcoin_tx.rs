@@ -63,9 +63,15 @@ pub async fn inscribe(
         derivation_path, 
         fee_rate).await.expect("build inscription transaction failed");
     let commit_tx_bytes = serialize(&commit_tx);
-    bitcoin_send_transaction(SendTransactionRequest{network, transaction: commit_tx_bytes}).await;
+    bitcoin_send_transaction(SendTransactionRequest{network, transaction: commit_tx_bytes})
+        .await
+        .expect("send commit transaction failed");
+       
     let reveal_tx_bytes  = serialize(&reveal_tx);
-    bitcoin_send_transaction(SendTransactionRequest { network, transaction: reveal_tx_bytes}).await;
+    bitcoin_send_transaction(SendTransactionRequest { network, transaction: reveal_tx_bytes})
+        .await
+        .expect("send reveal transaction failed");
+
     (commit_tx.compute_txid().encode_hex(), reveal_tx.compute_txid().encode_hex())
 
 }
@@ -120,7 +126,7 @@ async fn build_inscription_transaction(
         &reveal_script);
     let mut utxo_to_spent = vec![];
     let mut total_spent = 0;
-    utxos.iter().map(|utxo| {total_spent += utxo.1; utxo_to_spent.push(utxo.0);} );
+    utxos.iter().for_each(|utxo| {total_spent += utxo.1; utxo_to_spent.push(utxo.0);} );
     
     let total_sats_amount = Amount::from_sat(total_spent);
 
