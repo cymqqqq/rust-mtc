@@ -23,7 +23,6 @@ icrc-ledger-types = "0.1.5"
 serde_bytes = "0.11.14"
 bech32 = "0.11.0"
 ic-crypto-secp256k1 = { git = "https://github.com/dfinity/ic.git", branch = "master"}
-# getrandom = { version = "0.2", features = ["js"] }
 ic-crypto-getrandom-for-wasm = { git = "https://github.com/dfinity/ic.git", branch = "master"}
 ic-management-canister-types = { git = "https://github.com/dfinity/ic.git", branch = "master"}
 lazy_static = "1.4.0"
