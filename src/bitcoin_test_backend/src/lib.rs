@@ -1,5 +1,4 @@
 mod utils;
-mod inscription;
 mod bitcoin_tx;
 mod wallet;
 pub use wallet::address;
