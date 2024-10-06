@@ -1,29 +1,28 @@
+
 mod utils;
-mod inscription;
 mod bitcoin_tx;
 mod wallet;
-pub use wallet::address;
+use wallet::{address, state, send_btc};
+
+// use bitcoin_api::JsonOutPoint;
 use utils::{init_ecdsa_public_key, read_public_key};
-use ic_cdk::api::management_canister::bitcoin::{
-    bitcoin_get_balance, bitcoin_get_current_fee_percentiles, BitcoinNetwork, GetBalanceRequest, GetCurrentFeePercentilesRequest, GetUtxosResponse, MillisatoshiPerByte
-};
+use ic_cdk::{api::management_canister::bitcoin::{ GetBalanceRequest,
+    BitcoinNetwork, GetCurrentFeePercentilesRequest, MillisatoshiPerByte
+}, query};
 use ic_cdk_macros::{init, post_upgrade, pre_upgrade, update};
-// use ic_management_canister_types::DerivationPath;
-use utils::{ECDSAPublicKey, SendBtcRequest, UpdateUtxoRequest};
-use wallet::{state, send_btc};
 use std::cell::{Cell, RefCell};
-use candid::candid_method;
 use icrc_ledger_types::icrc1::account::Account;
-use candid::Principal;
-
-
+use candid::{candid_method, Principal};
+use utils::{ECDSAPublicKey, SendBtcRequest, UpdateUtxoRequest};
+use ic_cdk::api::management_canister::bitcoin::{bitcoin_get_current_fee_percentiles, bitcoin_get_balance};
 thread_local! {
+
     static NETWORK: Cell<BitcoinNetwork> = Cell::new(BitcoinNetwork::Testnet);
 
     // The derivation path to use for ECDSA secp256k1.
     static DERIVATION_PATH: Vec<Vec<u8>> = vec![];
     pub static SCHNORR_CANISTER: RefCell<String> = RefCell::new(String::from("6fwhw-fyaaa-aaaap-qb7ua-cai"));
-    // 6fwhw-fyaaa-aaaap-qb7ua-cai
+
     // The ECDSA key name.
     static KEY_NAME: RefCell<String> = RefCell::new(String::from("test_key_1"));
 }
@@ -40,13 +39,22 @@ pub async fn init(network: BitcoinNetwork) {
             BitcoinNetwork::Mainnet | BitcoinNetwork::Testnet => "test_key_1",
         }))
     });
+
 }
+
 #[update]
 #[candid_method(update)]
 pub async fn init_pub_key() -> ECDSAPublicKey {
     init_ecdsa_public_key().await
 
 }
+
+#[query]
+#[candid_method(query)]
+pub async fn read_pub_key() -> ECDSAPublicKey {
+    read_public_key().await
+}
+
 /// Returns the balance of the given bitcoin address.
 #[update]
 #[candid_method(update)]
@@ -57,14 +65,14 @@ pub async fn get_balance(address: String) -> u64 {
         Err(_) => 0u64
     }
 }
+
 /// Returns the UTXOs of the given bitcoin address.
 #[update]
 #[candid_method(update)]
 pub async fn get_utxos() -> Vec<(String, u64)> {
     // let network = NETWORK.with(|n| n.get());
-    // let mut utxo = Vec::new();
     state::read_wallet_utxo()
-  
+
 }
 /// Returns the 100 fee percentiles measured in millisatoshi/byte.
 /// Percentiles are computed from the last 10,000 transactions (if available).
@@ -105,7 +113,6 @@ pub async fn get_p2wpkh_address(pid: String) -> String {
     address::account_to_p2wpkh_address(network, &pub_key, &account).await
 }
 
-
 #[update]
 #[candid_method(update)]
 pub async fn get_p2pkh_address(pid: String) -> String {
@@ -121,9 +128,10 @@ pub async fn get_p2pkh_address(pid: String) -> String {
     let pub_key = read_public_key().await;
     address::account_to_p2pkh_address(network, &pub_key, &account).await
 }
+
 #[update]
 #[candid_method(update)]
-pub async fn send_btc(send_btc_request: SendBtcRequest) ->(Vec<u8>, String) {
+pub async fn send_btc(send_btc_request: SendBtcRequest) -> (Vec<u8>, String) {
     let dst_addr = send_btc_request.dst_address;
     let amount = send_btc_request.amount;
     let pid = Principal::from_text(send_btc_request.pid).unwrap();
@@ -142,6 +150,7 @@ pub async fn update_utxo(update_utxo_req: UpdateUtxoRequest) -> Vec<(String, u64
     let address = update_utxo_req.address;
     state::update_utxo(network, address).await
 }
+
 // #[pre_upgrade]
 // fn pre_upgrade() {
 //     let network = NETWORK.with(|n| n.get());
@@ -157,3 +166,9 @@ pub async fn update_utxo(update_utxo_req: UpdateUtxoRequest) -> Vec<(String, u64
 //     init(network);
 // }
 
+
+
+fn main() {
+    candid::export_service!();
+    std::print!("{}", __export_service());
+}

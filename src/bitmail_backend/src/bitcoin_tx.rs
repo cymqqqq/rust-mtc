@@ -20,7 +20,6 @@ use crate::{
     wallet::state::{get_all_utxo_from_wallet, JsonOutPoint}, 
     wallet::send_btc::sign_transaction_p2pkh, 
     utils::read_public_key, 
-    inscription::Inscription, 
     utils::{schnorr_public_key, sign_with_schnorr}, 
 };
 use crate::wallet::address::account_to_p2pkh_address;
@@ -42,7 +41,7 @@ pub async fn inscribe(
     fee_rate: u64,
     account: Account,
 ) -> (String, String) {
-    let inscription = Inscription::new(content_type, body);
+    // let inscription = Inscription::new(content_type, body);
     let derivation_path = vec![];
     let sender_public_key = read_public_key().await;
     let sender_address_string = account_to_p2pkh_address(network, &sender_public_key, &account).await;
@@ -59,7 +58,7 @@ pub async fn inscribe(
         &sender_address,
         dst_address, 
         schnnor_public_key.into(), 
-        inscription, 
+        // inscription, 
         derivation_path, 
         fee_rate).await.expect("build inscription transaction failed");
     let commit_tx_bytes = serialize(&commit_tx);
@@ -85,13 +84,12 @@ async fn build_inscription_transaction(
     sender_address: &Address,
     dst_address: &Address,
     schnnor_public_key: XOnlyPublicKey,
-    inscription: Inscription,
+    // inscription: Inscription,
     derivation_path: Vec<Vec<u8>>,
     fee_rate: FeeRate,
 ) -> Result<(Transaction, Transaction), String> {
     let mut builder = Builder::new();
 
-    // builder = inscription.append_reveal_script_to_builder(builder);
     
     let secp256 = Secp256k1::new();
     builder = builder

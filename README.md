@@ -1,5 +1,5 @@
-# Satoshi Wallet
-The first wallet based on bitcoin UTXO account model on the ICP network.
+# Bitmail
+The first light encrypted message communication protocol based on bitcoin on the ICP network.
 
 
 - [Quick Start](https://internetcomputer.org/docs/current/developer-docs/setup/deploy-locally)
