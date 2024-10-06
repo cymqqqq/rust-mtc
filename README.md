@@ -1,4 +1,4 @@
-# Bitmail
+# MTC(Message Transmitted by Canisters)
 The first light encrypted message communication protocol based on bitcoin on the ICP network.
 
 

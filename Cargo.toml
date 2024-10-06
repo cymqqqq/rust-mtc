@@ -1,5 +1,5 @@
 [workspace]
 members = [
-    "src/bitmail_backend"
+    "src/mtc_backend"
 ]
 resolver = "2"

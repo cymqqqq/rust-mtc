@@ -1,5 +1,4 @@
 mod utils;
-mod bitcoin_tx;
 mod wallet;
 pub use wallet::address;
 use utils::{init_ecdsa_public_key, read_public_key};
