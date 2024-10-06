@@ -1,5 +1,5 @@
 [package]
-name = "bitcoin_test_backend"
+name = "bitmail_backend"
 version = "0.1.0"
 edition = "2021"
 
