@@ -1,8 +1,8 @@
 {
   "canisters": {
-    "bitmail_backend": {
-      "candid": "src/bitmail_backend/bitmail.did",
-      "package": "bitmail_backend",
+    "mtc_backend": {
+      "candid": "src/mtc_backend/mtc.did",
+      "package": "mtc_backend",
       "type": "rust"
     }
   },

@@ -158,32 +158,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bitmail_backend"
-version = "0.1.0"
-dependencies = [
- "aes",
- "bech32",
- "bitcoin",
- "bs58",
- "candid",
- "cbc",
- "ed25519-dalek",
- "hex",
- "ic-cdk",
- "ic-cdk-macros 0.9.0",
- "ic-cdk-timers",
- "ic-crypto-getrandom-for-wasm",
- "ic-crypto-secp256k1",
- "ic-management-canister-types",
- "icrc-ledger-types",
- "lazy_static",
- "ripemd",
- "serde",
- "serde_bytes",
- "sha2",
-]
-
-[[package]]
 name = "block-buffer"
 version = "0.10.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1033,6 +1007,32 @@ name = "memchr"
 version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
+
+[[package]]
+name = "mtc_backend"
+version = "0.1.0"
+dependencies = [
+ "aes",
+ "bech32",
+ "bitcoin",
+ "bs58",
+ "candid",
+ "cbc",
+ "ed25519-dalek",
+ "hex",
+ "ic-cdk",
+ "ic-cdk-macros 0.9.0",
+ "ic-cdk-timers",
+ "ic-crypto-getrandom-for-wasm",
+ "ic-crypto-secp256k1",
+ "ic-management-canister-types",
+ "icrc-ledger-types",
+ "lazy_static",
+ "ripemd",
+ "serde",
+ "serde_bytes",
+ "sha2",
+]
 
 [[package]]
 name = "num-bigint"
