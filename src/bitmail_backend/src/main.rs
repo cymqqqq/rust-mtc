@@ -1,6 +1,5 @@
 
 mod utils;
-mod bitcoin_tx;
 mod wallet;
 use wallet::{address, state, send_btc};
 
