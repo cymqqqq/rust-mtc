@@ -1,7 +1,7 @@
 
 mod utils;
 mod wallet;
-use wallet::{address, state, send_btc};
+use wallet::{address, state};
 
 // use bitcoin_api::JsonOutPoint;
 use utils::{init_ecdsa_public_key, read_public_key};
@@ -126,20 +126,6 @@ pub async fn get_p2pkh_address(pid: String) -> String {
     let network = BitcoinNetwork::Testnet;
     let pub_key = read_public_key().await;
     address::account_to_p2pkh_address(network, &pub_key, &account).await
-}
-
-#[update]
-#[candid_method(update)]
-pub async fn send_btc(send_btc_request: SendBtcRequest) -> (Vec<u8>, String) {
-    let dst_addr = send_btc_request.dst_address;
-    let amount = send_btc_request.amount;
-    let pid = Principal::from_text(send_btc_request.pid).unwrap();
-    let account = Account { owner: pid, subaccount: None };
-    let network = BitcoinNetwork::Testnet;
-    // let key = read_public_key().await;
-    let key_name = "test_key_1".to_string();
-    let tx = send_btc::send(network, key_name, dst_addr, amount, &account).await;
-    tx
 }
 
 #[update]
